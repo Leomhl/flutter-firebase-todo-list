@@ -1,11 +1,15 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:todolist/components/task_dismissible.dart';
 import 'package:todolist/components/task_item.dart';
 import 'package:todolist/models/task.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class ToDoListPage extends StatefulWidget {
+  final FirebaseApp app;
+  ToDoListPage({this.app});
 
   @override
   _ToDoListPageState createState() => _ToDoListPageState();
@@ -13,6 +17,11 @@ class ToDoListPage extends StatefulWidget {
 
 class _ToDoListPageState extends State<ToDoListPage> {
   CalendarController _calendarController;
+
+  final databaseReference = FirebaseDatabase(
+      databaseURL: 'https://todo-list-a8b3c-default-rtdb.firebaseio.com/'
+  ).reference();
+
 
   void initState() {
     super.initState();
@@ -38,8 +47,9 @@ class _ToDoListPageState extends State<ToDoListPage> {
       DateTime dateToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
       return dateToday.toString().split(" ")[0];
     }
-    else
-      return _calendarController.selectedDay.toString().split(" ")[0];
+    else {
+        return _calendarController.selectedDay.toString().split(" ")[0];
+    }
   }
 
   TextStyle dayStyle(FontWeight fontWeight) {
@@ -51,10 +61,35 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   void selectedDay(DateTime day, List events, List holidays) {
 
+    databaseReference.child(calendarToDate()).once()
+    .then((DataSnapshot snapshot) {
+      print('busquei ${calendarToDate()}, ${snapshot.key}');
+
+      setState(() {
+        tasks = List<Task>();
+
+        if (snapshot.value != null) {
+          var dbTasks = Map<String, dynamic>.from(snapshot.value);
+
+          dbTasks.forEach((date, task) {
+
+            tasks.add(Task(title: task['title'],
+                description: task['description'],
+                done: task['done'],
+                date: snapshot.key)
+            );
+          });
+        }
+      });
+    });
   }
 
   void removeTask(index) {
+
     setState(() {
+      databaseReference.child(calendarToDate())
+      .child(tasks[index].title).remove();
+
       tasks.removeAt(index);
     });
   }
@@ -109,6 +144,14 @@ class _ToDoListPageState extends State<ToDoListPage> {
             onPressed: () {
 
               if(formKey.currentState.validate()) {
+
+                databaseReference.child(calendarToDate())
+                .child(_taskTitleController.text).set({
+                  'title': _taskTitleController.text,
+                  'description': _taskDescriptionController.text,
+                  'done': false,
+                });
+
                 tasks.add(
                   Task(
                     title: _taskTitleController.text,

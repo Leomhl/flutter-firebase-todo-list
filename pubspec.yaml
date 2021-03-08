@@ -15,6 +15,8 @@ dependencies:
   cupertino_icons: ^1.0.0
   table_calendar: ^2.3.3
   intl: ^0.16.1
+  firebase_core: "^0.7.0"
+  firebase_database: "^6.0.0"
 
 
 dev_dependencies:
