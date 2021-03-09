@@ -193,7 +193,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                         ),
                         Padding(
                             padding: EdgeInsets.only(top:20, left: 30),
-                            child: Text("Today",
+                            child: Text("Hoje",
                               style: TextStyle(
                                 color: Theme.of(context).accentColor,
                                 fontSize: 30,
