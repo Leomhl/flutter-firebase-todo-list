@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -8,8 +7,6 @@ import 'package:todolist/models/task.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class ToDoListPage extends StatefulWidget {
-  final FirebaseApp app;
-  ToDoListPage({this.app});
 
   @override
   _ToDoListPageState createState() => _ToDoListPageState();
@@ -63,7 +60,6 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
     databaseReference.child(calendarToDate()).once()
     .then((DataSnapshot snapshot) {
-      print('busquei ${calendarToDate()}, ${snapshot.key}');
 
       setState(() {
         tasks = List<Task>();
@@ -240,7 +236,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
                         ),
                         Padding(
                             padding: EdgeInsets.only(top:20, left: 30),
-                            child: Text("Today",
+                            child: Text("Hoje",
                               style: TextStyle(
                                 color: Theme.of(context).accentColor,
                                 fontSize: 30,
