@@ -17,10 +17,6 @@ class _ToDoListPageState extends State<ToDoListPage> {
   void initState() {
     super.initState();
     _calendarController = CalendarController();
-
-    Future.delayed( Duration(milliseconds: 1000), () {
-      selectedDay(null, null, null);
-    });
   }
 
   @override
