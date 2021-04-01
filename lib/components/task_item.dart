@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:todolist/models/task.dart';
 
@@ -10,6 +11,10 @@ class TaskItem extends StatefulWidget {
 }
 
 class _TaskItemState extends State<TaskItem> {
+
+  final databaseReference = FirebaseDatabase(
+      databaseURL: 'https://todo-list-alura-default-rtdb.firebaseio.com/'
+  ).reference();
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +30,12 @@ class _TaskItemState extends State<TaskItem> {
             ),
             onPressed: () {
               setState(() {
+                databaseReference.child(widget.task.date)
+                .child(widget.task.title)
+                .update({
+                  'done': !widget.task.done
+                });
+
                 widget.task.done = !widget.task.done;
               });
             },

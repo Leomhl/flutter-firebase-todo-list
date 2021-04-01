@@ -1,3 +1,5 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -14,9 +16,17 @@ class ToDoListPage extends StatefulWidget {
 class _ToDoListPageState extends State<ToDoListPage> {
   CalendarController _calendarController;
 
+  final databaseReference = FirebaseDatabase(
+    // databaseURL: 'https://todo-list-alura-default-rtdb.firebaseio.com/'
+      databaseURL: 'alura'
+  ).reference();
+
   void initState() {
     super.initState();
     _calendarController = CalendarController();
+
+    Future.delayed(Duration(seconds: 1))
+    .then((value) => selectedDay(null, null, null));
   }
 
   @override
@@ -25,7 +35,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
     super.dispose();
   }
 
-  List<Task> tasks = List<Task>();
+  List<Task> tasks = [];
 
   String calendarToDate() {
     String selectedDate = _calendarController.selectedDay.toString().split(" ")[0];
@@ -47,15 +57,38 @@ class _ToDoListPageState extends State<ToDoListPage> {
 
   void selectedDay(DateTime day, List events, List holidays) {
 
-  }
+    databaseReference.child(calendarToDate()).once()
+    .then((DataSnapshot snapshot) {
+
+      setState(() {
+        tasks = [];
+
+        if(snapshot.value != null) {
+
+          var dbTasks = Map<String, dynamic>.from(snapshot.value);
+
+          dbTasks.forEach((key, task) {
+            tasks.add(Task(
+                title: task['title'],
+                description: task['description'],
+                date: snapshot.key,
+                done: task['done'])
+            );
+          });
+        }
+      });
+    });
+}
 
   void removeTask(index) {
     setState(() {
+      databaseReference.child(calendarToDate()).child(tasks[index].title).remove();
       tasks.removeAt(index);
     });
   }
 
   void addTask(context) {
+
     TextEditingController _taskTitleController = TextEditingController();
     TextEditingController _taskDescriptionController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -100,11 +133,26 @@ class _ToDoListPageState extends State<ToDoListPage> {
           ),
         ),
         actions: [
-          RaisedButton(
+          ElevatedButton(
             child: Text("Salvar"),
             onPressed: () {
 
               if(formKey.currentState.validate()) {
+
+                databaseReference.child(calendarToDate())
+                .child(_taskTitleController.text)
+                .set({
+                  'title': _taskTitleController.text,
+                  'description': _taskDescriptionController.text,
+                  'done': false
+                }).catchError((erro) {
+                  FirebaseCrashlytics.instance.setCustomKey('local', 'método add task');
+                  FirebaseCrashlytics.instance.recordError(erro, null);
+
+                  print("###########");
+                  print(erro);
+                });
+
                 tasks.add(
                   Task(
                     title: _taskTitleController.text,
@@ -118,7 +166,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
             }
           )
         ],
-          );
+        );
     });
   }
 
@@ -239,7 +287,9 @@ class _ToDoListPageState extends State<ToDoListPage> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {addTask(context);},
+        onPressed: () {
+          addTask(context);
+        },
         child: Icon(CupertinoIcons.add, color: Theme.of(context).accentColor),
         backgroundColor: Theme.of(context).buttonColor,
       ),
